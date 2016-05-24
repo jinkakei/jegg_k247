@@ -9,14 +9,14 @@ require "~/lib_k247/K247_basic"
 
 watcher = K247_Main_Watch.new
 
-#jegg_org    = "jegg500_142to143E_39to40N_20160523.txt"
-#  n_x = 100; n_y = 100
-#  lon_min = 142.0; lon_max = 143.0
-#  lat_min =  39.0; lat_max =  40.0
-jegg_org    = "jegg500_141to144E_38to40N_20160524.txt"
-  n_x = 300; n_y = 200
-  lon_min = 141.0; lon_max = 144.0
-  lat_min =  38.0; lat_max =  40.0
+jegg_org    = "jegg500_142to143E_39to40N_20160523.txt"
+  n_x = 100; n_y = 100
+  lon_min = 142.0; lon_max = 143.0
+  lat_min =  39.0; lat_max =  40.0
+#jegg_org    = "jegg500_141to144E_38to40N_20160524.txt"
+#  n_x = 300; n_y = 200
+#  lon_min = 141.0; lon_max = 144.0
+#  lat_min =  38.0; lat_max =  40.0
 #jegg_org    = "jegg500_sample.txt"
 #jegg_sorted = "jegg500_sorted.txt"
   # use bash ( not necessary )
@@ -68,6 +68,17 @@ end # for j in 0..n_y-1
 end # for i in 0..n_x-1
 
 
+xgrad_arr = NArray.sfloat( n_x, n_y ).fill( 0.0 )
+  deg_to_km = 0.01
+for i in 0..n_x-2
+for j in 0..n_y-2
+  if ( dep_arr[i, j]* dep_arr[i+1, j ] ) != 0.0
+    xgrad_arr[i,j] = ( dep_arr[ i+1, j] - dep_arr[i,j] ) / dx * deg_to_km
+  end
+end # for j in 0..n_y-1
+end # for i in 0..n_x-1
+
+
 ax_lon = Axis.new.set_pos( VArray.new( lon_arr, \
            { "long_name" => "longitude", "units" => "degE"}, "lon") )
 ax_lat = Axis.new.set_pos( VArray.new( lat_arr, \
@@ -75,9 +86,13 @@ ax_lat = Axis.new.set_pos( VArray.new( lat_arr, \
 da_dep = VArray.new( dep_arr, \
                     { "long_name" => "depth", "units" => "m"}, "depth")
 gp_dep = GPhys.new( Grid.new( ax_lon, ax_lat ), da_dep )
+da_xgrad = VArray.new( xgrad_arr, \
+                    { "long_name" => "x gradient of depth", "units" => "m/km"}, "xgrad")
+gp_xgrad = GPhys.new( Grid.new( ax_lon, ax_lat ), da_xgrad )
 
 fu = NetCDF.create( "output.nc" )
 GPhys::NetCDF_IO.write( fu, gp_dep )
+GPhys::NetCDF_IO.write( fu, gp_xgrad )
 fu.close
 =begin
 =end
